@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Downloader Aldi 😹</title>
-
   <style>
     body {
       background: #0f0f0f;
@@ -16,7 +15,6 @@
       height: 100vh;
       margin: 0;
     }
-
     .box {
       background: #1a1a1a;
       padding: 30px;
@@ -25,7 +23,6 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       text-align: center;
     }
-
     input {
       width: 100%;
       padding: 12px;
@@ -37,9 +34,6 @@
       box-sizing: border-box;
       outline: none;
     }
-
-    input:focus { border-color: #555; }
-
     button {
       width: 100%;
       padding: 12px;
@@ -50,11 +44,7 @@
       font-weight: bold;
       background: #ffffff;
       color: #000;
-      transition: 0.3s;
     }
-
-    button:hover { background: #ccc; }
-    
     .footer { margin-top: 20px; font-size: 12px; color: #555; }
   </style>
 </head>
@@ -63,16 +53,13 @@
 <div class="box">
   <h2>Video Downloader 😹</h2>
   <p style="font-size: 13px; color: #888;">Paste direct link (.mp4) di bawah</p>
-
   <input type="text" id="url" placeholder="https://example.com/video.mp4">
-
   <button onclick="downloadVideo()">Gas Download!</button>
-  
   <div class="footer">Made with emosi by Doni 🥀</div>
 </div>
 
 <script>
-async function downloadVideo() {
+function downloadVideo() {
   const videoUrl = document.getElementById("url").value;
 
   if (!videoUrl) {
@@ -80,29 +67,19 @@ async function downloadVideo() {
     return;
   }
 
-  // Kalo link direct, kita coba pake teknik Blob biar beneran ke-download
-  try {
-    const response = await fetch(videoUrl);
-    if (!response.ok) throw new Error();
-    
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "video_hasil_colongan.mp4"; // Nama file pas ke-download
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    
-  } catch (err) {
-    // Kalo kena blokir CORS atau bukan direct link, lempar ke tab baru
-    console.log("CORS block atau bukan direct link, buka tab baru aja.");
-    const a = document.createElement("a");
-    a.href = videoUrl;
-    a.target = "_blank";
-    a.click();
-  }
+  // Bikin elemen anchor sementara
+  const link = document.createElement('a');
+  link.href = videoUrl;
+  
+  // Paksa buka di tab baru biar gak nge-refresh web lu sendiri
+  link.target = '_blank'; 
+  
+  // Atribut download (cuma jalan kalo satu domain atau servernya ijinin)
+  link.setAttribute('download', 'video_donlotan.mp4');
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 </script>
 
