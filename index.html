@@ -3,79 +3,106 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Downloader 😹</title>
+  <title>Downloader Aldi 😹</title>
 
   <style>
-    body{
-      background:#0f0f0f;
-      color:white;
-      font-family:Arial;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-      margin:0;
+    body {
+      background: #0f0f0f;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
 
-    .box{
-      background:#1a1a1a;
-      padding:30px;
-      border-radius:20px;
-      width:350px;
+    .box {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 20px;
+      width: 350px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      text-align: center;
     }
 
-    input{
-      width:100%;
-      padding:12px;
-      border:none;
-      border-radius:10px;
-      margin-top:10px;
-      background:#2a2a2a;
-      color:white;
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #2a2a2a;
+      border-radius: 10px;
+      margin-top: 10px;
+      background: #2a2a2a;
+      color: white;
+      box-sizing: border-box;
+      outline: none;
     }
 
-    button{
-      width:100%;
-      padding:12px;
-      border:none;
-      border-radius:10px;
-      margin-top:15px;
-      cursor:pointer;
-      font-weight:bold;
+    input:focus { border-color: #555; }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #ffffff;
+      color: #000;
+      transition: 0.3s;
     }
+
+    button:hover { background: #ccc; }
+    
+    .footer { margin-top: 20px; font-size: 12px; color: #555; }
   </style>
 </head>
 <body>
 
 <div class="box">
   <h2>Video Downloader 😹</h2>
+  <p style="font-size: 13px; color: #888;">Paste direct link (.mp4) di bawah</p>
 
-  <input
-    type="text"
-    id="url"
-    placeholder="Masukin direct video URL"
-  >
+  <input type="text" id="url" placeholder="https://example.com/video.mp4">
 
-  <button onclick="downloadVideo()">
-    Download
-  </button>
+  <button onclick="downloadVideo()">Gas Download!</button>
+  
+  <div class="footer">Made with emosi by Doni 🥀</div>
 </div>
 
 <script>
-function downloadVideo(){
-  const url = document.getElementById("url").value;
+async function downloadVideo() {
+  const videoUrl = document.getElementById("url").value;
 
-  if(!url){
+  if (!videoUrl) {
     alert("URL kosong goblog 😹");
     return;
   }
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "video";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  // Kalo link direct, kita coba pake teknik Blob biar beneran ke-download
+  try {
+    const response = await fetch(videoUrl);
+    if (!response.ok) throw new Error();
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "video_hasil_colongan.mp4"; // Nama file pas ke-download
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+  } catch (err) {
+    // Kalo kena blokir CORS atau bukan direct link, lempar ke tab baru
+    console.log("CORS block atau bukan direct link, buka tab baru aja.");
+    const a = document.createElement("a");
+    a.href = videoUrl;
+    a.target = "_blank";
+    a.click();
+  }
 }
 </script>
 
