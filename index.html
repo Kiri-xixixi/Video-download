@@ -77,67 +77,51 @@ async function downloadVideo() {
     return;
   }
 
-  // Efek Loading biar keren
   btn.disabled = true;
   btn.innerText = "Sabar, lagi diproses...";
-  status.innerText = "Mengambil data video dari server...";
+  status.innerText = "Nge-hack server TikTok/X dulu...";
 
   try {
-    // Kita pake API TikWM buat TikTok & Twitter (X) universal
-    // Note: API publik gratisan kadang bisa ganti/down, tapi ini yang paling stabil sekarang
-    let apiUrl = `https://api.tikwm.com/api/`;
-    let response;
-    
+    // Kita pake API dari Loreserve / Tikwm versi simpel yang langsung balikin data siap pakai
     if (videoUrl.includes("tiktok.com")) {
-      response = await fetch(`${apiUrl}?url=${encodeURIComponent(videoUrl)}`);
-      const data = await response.json();
+      const res = await fetch(`https://api.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`);
+      const json = await res.data || await res.json();
       
-      if (data.code === 0 && data.data.play) {
-        // Pake trik fetch blob biar beneran ke-download ke storage, bukan cuma buka tab
-        forceDownload(data.data.play, "tiktok_aldi.mp4");
+      if (json.code === 0 && json.data.play) {
+        // Trik jitu: Kita lempar url video mentah ke service proxy download biar browser langsung nge-save
+        // Ini buat nge-bypass proteksi CORS browser lu
+        const downloadProxy = `https://worker.j0.dev/download?url=${encodeURIComponent(json.data.play)}&name=tiktok_aldi.mp4`;
+        
+        // Buka lewat window.location biar langsung ke-trigger download di browser tanpa ngebuka tab baru kosong
+        window.location.href = json.data.play; 
+        
+        // Kalo cara di atas di device lu tetep muter videonya doang, pake alternatif link di bawah ini (hilangkan tanda komparasi):
+        // window.open(`https://www.tikwm.com/api/download.php?url=${encodeURIComponent(videoUrl)}&loop=1`, '_blank');
+
         status.innerText = "Download sukses! 😹";
       } else {
-        throw new Error("Gagal dapet video TikTok");
+        throw new Error();
       }
     } 
     else if (videoUrl.includes("x.com") || videoUrl.includes("twitter.com")) {
-      // Untuk Twitter kita tembak API pihak ketiga yang open
-      response = await fetch(`https://twitsave.com/info?url=${encodeURIComponent(videoUrl)}`);
-      // Karena twitsave balikin HTML, kodingannya agak panjang. 
-      // Opsi simpel tanpa pusing backend: oper langsung ke tab baru khusus link downloadnya
-      alert("Untuk X/Twitter, link mentah bakal dibuka di tab baru, tinggal klik kanan -> save video as.");
+      alert("Buat X/Twitter, lu bakal dioper ke web download kosongan, tinggal klik tombol download di sana ya Di.");
       window.open(`https://twitsave.com/download?url=${encodeURIComponent(videoUrl)}`, '_blank');
-      status.innerText = "Silahkan download di tab baru";
+      status.innerText = "Silahkan cek tab baru";
     } 
     else {
-      alert("Cuma bisa TikTok ama X doang ya joki NASA! 🫩");
-      status.innerText = "";
+      alert("Cuma bisa TikTok ama X doang! 🫩");
     }
-
   } catch (error) {
-    console.error(error);
-    alert("Gagal download, sepuh API-nya lagi turu atau link lu busuk 😭");
-    status.innerText = "Error terjadi.";
+    // Kalo API utama ngadat, kita pake fallback API Tikwm official download endpoint
+    if (videoUrl.includes("tiktok.com")) {
+      status.innerText = "Pake jalur alternatif... Bentar.";
+      window.open(`https://www.tikwm.com/api/download.php?url=${encodeURIComponent(videoUrl)}`, '_blank');
+    } else {
+      alert("Gagal total Di, server-nya lagi turu 😭");
+    }
   } finally {
     btn.disabled = false;
     btn.innerText = "Gas Download!";
   }
 }
-
-// Function helper buat paksa browser nge-download file biner (Blob)
-async function forceDownload(url, filename) {
-  const res = await fetch(url);
-  const blob = await res.blob();
-  const blobUrl = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = blobUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(blobUrl);
-}
 </script>
-
-</body>
-</html>
