@@ -78,47 +78,51 @@ async function downloadVideo() {
   }
 
   btn.disabled = true;
-  btn.innerText = "Sabar, lagi diproses...";
-  status.innerText = "Mencoba API Jalur Utama (TikWM)...";
+  btn.innerText = "Sabar, lagi proses...";
+  status.innerText = "Menghubungkan ke server logistik...";
 
-  // --- API JALUR 1: TIKWM ---
   try {
     if (videoUrl.includes("tiktok.com")) {
+      status.innerText = "Mengambil data video TikTok...";
+      
+      // Menggunakan API TikWM jalur fetch data
       const res = await fetch(`https://api.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`);
       const json = await res.json();
       
       if (json.code === 0 && json.data.play) {
-        window.open(`https://www.tikwm.com/api/download.php?url=${encodeURIComponent(videoUrl)}&loop=1`, '_blank');
-        status.innerText = "Download sukses via TikWM! 😹";
-        return; // Keluar dari fungsi kalo sukses
+        status.innerText = "Mengunduh file video langsung...";
+        
+        // Tembak URL video mentahnya, ubah jadi blob biar langsung ke-download
+        const videoRes = await fetch(json.data.play);
+        const blob = await videoRes.blob();
+        
+        // Bikin link samaran buat trigger download otomatis di browser
+        const downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = `tiktok_${json.data.id || 'video'}.mp4`;
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        status.innerText = "Download sukses langsung ke lokal! 😹";
+      } else {
+        throw new Error("Gagal dapet video mentah");
       }
-      throw new Error("TikWM Gagal");
     } 
     else if (videoUrl.includes("x.com") || videoUrl.includes("twitter.com")) {
+      status.innerText = "X/Twitter terdeteksi. Mengalihkan ke Twitsave...";
+      // Buat X, sementara emang paling aman dilempar ke pihak ketiga karena enkripsi Elon ketat
       window.open(`https://twitsave.com/download?url=${encodeURIComponent(videoUrl)}`, '_blank');
-      status.innerText = "Silahkan cek tab baru";
-      return;
+      status.innerText = "Silahkan cek tab Twitsave buat download.";
+    } else {
+      alert("Cuma bisa TikTok ama X doang ya King MikroTik! 🫩");
     }
   } catch (e) {
-    console.log("Jalur utama turu, pindah jalur logistik...");
-  }
-
-  // --- API JALUR 2: CADANGAN (Khusus TikTok) ---
-  if (videoUrl.includes("tiktok.com")) {
-    status.innerText = "TikWM turu, mencoba API Cadangan (Snaptik Open)...";
-    try {
-      // Kita tembak API alternatif yang langsung otomatis nge-download
-      const backupUrl = `https://api.tikverse.workers.dev/download?url=${encodeURIComponent(videoUrl)}`;
-      window.open(backupUrl, '_blank');
-      status.innerText = "Membuka link download cadangan... 🫩";
-    } catch (err) {
-      alert("Semua API lagi turu masal, lu download manual aja lah Di! 😭");
-      status.innerText = "Gagal total.";
-    } finally {
-      btn.disabled = false;
-      btn.innerText = "Gas Download!";
-    }
-  } else {
+    console.error(e);
+    status.innerText = "API utama turu / diblokir CORS browser. 😭";
+    alert("Gagal total Di, API-nya lagi pingsan!");
+  } finally {
     btn.disabled = false;
     btn.innerText = "Gas Download!";
   }
