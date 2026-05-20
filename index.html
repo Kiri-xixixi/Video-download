@@ -67,9 +67,13 @@
 </div>
 
 <script>
+// Variabel global untuk menyimpan URL saat ini
+let currentVideoUrl = "";
+
 async function downloadVideo() {
-  const videoUrl = document.getElementById("url").value;
+  let videoUrl = document.getElementById("url").value.trim();
   const btn = document.getElementById("btn");
+  const btnBackup = document.getElementById("btn-backup");
   const status = document.getElementById("status");
 
   if (!videoUrl) {
@@ -77,54 +81,69 @@ async function downloadVideo() {
     return;
   }
 
-  btn.disabled = true;
-  btn.innerText = "Sabar, lagi proses...";
-  status.innerText = "Menghubungkan ke server logistik...";
+  currentVideoUrl = videoUrl;
 
-  try {
-    if (videoUrl.includes("tiktok.com")) {
-      status.innerText = "Mengambil data video TikTok...";
-      
-      // Menggunakan API TikWM jalur fetch data
-      const res = await fetch(`https://api.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`);
-      const json = await res.json();
-      
-      if (json.code === 0 && json.data.play) {
-        status.innerText = "Mengunduh file video langsung...";
-        
-        // Tembak URL video mentahnya, ubah jadi blob biar langsung ke-download
-        const videoRes = await fetch(json.data.play);
-        const blob = await videoRes.blob();
-        
-        // Bikin link samaran buat trigger download otomatis di browser
-        const downloadLink = document.createElement("a");
-        downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = `tiktok_${json.data.id || 'video'}.mp4`;
-        
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        
-        status.innerText = "Download sukses langsung ke lokal! 😹";
-      } else {
-        throw new Error("Gagal dapet video mentah");
-      }
-    } 
-    else if (videoUrl.includes("x.com") || videoUrl.includes("twitter.com")) {
-      status.innerText = "X/Twitter terdeteksi. Mengalihkan ke Twitsave...";
-      // Buat X, sementara emang paling aman dilempar ke pihak ketiga karena enkripsi Elon ketat
-      window.open(`https://twitsave.com/download?url=${encodeURIComponent(videoUrl)}`, '_blank');
-      status.innerText = "Silahkan cek tab Twitsave buat download.";
-    } else {
-      alert("Cuma bisa TikTok ama X doang ya King MikroTik! 🫩");
-    }
-  } catch (e) {
-    console.error(e);
-    status.innerText = "API utama turu / diblokir CORS browser. 😭";
-    alert("Gagal total Di, API-nya lagi pingsan!");
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Gas Download!";
+  btnBackup.style.display = "none";
+  btn.disabled = true;
+  btn.innerText = "Sabar, lagi diproses...";
+
+  const isTikTok = videoUrl.includes("tiktok.com");
+  const isTwitter = videoUrl.includes("x.com") || videoUrl.includes("twitter.com");
+
+  // --- JALUR TIKTOK (TIKWM) ---
+  if (isTikTok) {
+    status.innerText = "Membuka Jalur Utama (TikWM)...";
+    
+    // FIX: Udah gua pasang backtick, tanda $, ama parameter api-nya, Di!
+    const tikwmDownloadUrl = `https://www.tikwm.com/api/download.php?url=${encodeURIComponent(videoUrl)}&loop=1`;
+    window.open(tikwmDownloadUrl, '_blank');
+    
+    status.innerText = "Membuka tab download TikWM! 😹";
+    
+    setTimeout(() => {
+      btnBackup.style.display = "inline-block";
+      status.innerText = "Membuka tab download TikWM! Jika gagal/blank, klik tombol cadangan di atas.";
+    }, 3000);
+
+    resetButton();
+    return;
+  } 
+  
+  // --- JALUR X / TWITTER ---
+  else if (isTwitter) {
+    status.innerText = "Membuka Jalur Twitter (Twitsave)...";
+    // FIX: Udah dipasang parameter twitsave-nya yang bener
+    window.open(`https://twitsave.com/download?url=${encodeURIComponent(videoUrl)}`, '_blank');
+    status.innerText = "Silahkan cek tab baru";
+    resetButton();
+    return;
+  } 
+  
+  else {
+    alert("Link apaan nih? Cuma bisa TikTok atau X/Twitter doang ya! 😤");
+    resetButton();
   }
+}
+
+// --- 2. FUNGSI JALUR CADANGAN TIKTOK ---
+function downloadBackup() {
+  const status = document.getElementById("status");
+  status.innerText = "Mencoba API Cadangan (Snaptik Open)...";
+  
+  try {
+    // FIX: Udah dibenerin string literals-nya
+    const backupUrl = `https://api.tikverse.workers.dev/download?url=${encodeURIComponent(currentVideoUrl)}`;
+    window.open(backupUrl, '_blank');
+    status.innerText = "Membuka link download cadangan... 🫩";
+  } catch (err) {
+    alert("Semua API lagi turu masal, lu download manual aja lah Di! 😭");
+    status.innerText = "Gagal total.";
+  }
+}
+
+function resetButton() {
+  const btn = document.getElementById("btn");
+  btn.disabled = false;
+  btn.innerText = "Gas Download!";
 }
 </script>
