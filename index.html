@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Downloader Aldi 😹</title>
+  <title>Pokoknya web Downloader 😹</title>
   <style>
     body {
       background: #0f0f0f;
@@ -51,6 +51,11 @@
       color: #aaa;
       cursor: not-allowed;
     }
+    /* Style tombol cadangan biar beda dikit warna merah/orange */
+    #btn-backup {
+      background: #ff5722;
+      color: white;
+    }
     .footer { margin-top: 20px; font-size: 12px; color: #555; }
     #status { margin-top: 10px; font-size: 13px; color: #ffeb3b; }
   </style>
@@ -61,9 +66,12 @@
   <h2>Video Downloader 😹</h2>
   <p style="font-size: 13px; color: #888;">Paste link TikTok / X (Twitter) di bawah</p>
   <input type="text" id="url" placeholder="https://vt.tiktok.com/... atau https://x.com/...">
+  
   <button id="btn" onclick="downloadVideo()">Gas Download!</button>
+  <button id="btn-backup" onclick="downloadBackup()" style="display: none;">Pake Jalur Cadangan! 🫩</button>
+  
   <div id="status"></div>
-  <div class="footer">Made with emosi by Doni 🥀</div>
+  <div class="footer">Made in China 🥀</div>
 </div>
 
 <script>
@@ -92,24 +100,23 @@ async function downloadVideo() {
   if (isTikTok) {
     status.innerText = "Mengambil data video dari TikWM...";
     
-    // Pake proxy public biar gak kena CORS jancuk
-    const corsProxy = "https://cors-anywhere.herokuapp.com/"; 
-    // Atau pake alternatif proxy lain kalau heroku lagi lemot: "https://api.allorigins.win/raw?url="
-    
+    // Alternatif proxy AllOrigins karena cors-anywhere heroku sering minta demo access dulu di webnya
+    const corsProxy = "https://api.allorigins.win/raw?url="; 
     const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`;
 
     try {
-      // Kita fetch datanya, bukan pake window.open di awal!
-      const response = await fetch(corsProxy + apiUrl);
+      const response = await fetch(corsProxy + encodeURIComponent(apiUrl));
       const resData = await response.json();
 
       if (resData.code === 0 && resData.data) {
         status.innerText = "Video ketemu! Mengunduh... 😹";
         
-        // Ambil link video tanpa watermark dari response TikWM
-        const videoDownloadUrl = `https://www.tikwm.com${resData.data.play}`;
+        // Cek apakah play-nya udah ada domainnya atau relatif
+        let videoDownloadUrl = resData.data.play;
+        if (!videoDownloadUrl.startsWith('http')) {
+          videoDownloadUrl = `https://www.tikwm.com${videoDownloadUrl}`;
+        }
         
-        // Nah baru di sini lu tembak buat download filenya langsung
         window.open(videoDownloadUrl, '_self'); 
       } else {
         throw new Error(resData.msg || "Gagal dapet link video");
@@ -118,14 +125,14 @@ async function downloadVideo() {
     } catch (err) {
       console.error(err);
       status.innerText = "Jalur utama CORS error/lemah. Klik tombol cadangan!";
-      btnBackup.style.display = "inline-block";
+      btnBackup.style.display = "block"; // Munculin tombol cadangan kalau error
     }
 
     resetButton();
     return;
   } 
   
-  // --- JALUR X / TWITTER (Tetep Web Scraper, pake window.open gapapa karena ini halaman web, bkn API) ---
+  // --- JALUR X / TWITTER ---
   else if (isTwitter) {
     status.innerText = "Membuka Jalur Twitter (Twitsave)...";
     window.open(`https://twitsave.com/download?url=${encodeURIComponent(videoUrl)}`, '_blank');
@@ -146,7 +153,6 @@ function downloadBackup() {
   status.innerText = "Mencoba API Cadangan (Snaptik Open)...";
   
   try {
-    // Kalau pake Cloudflare Workers punya orang, biasanya emang udah di-handle CORS-nya dari server mereka
     const backupUrl = `https://api.tikverse.workers.dev/download?url=${encodeURIComponent(currentVideoUrl)}`;
     window.open(backupUrl, '_blank');
     status.innerText = "Membuka link download cadangan... 🫩";
@@ -162,3 +168,5 @@ function resetButton() {
   btn.innerText = "Gas Download!";
 }
 </script>
+</body>
+</html>
